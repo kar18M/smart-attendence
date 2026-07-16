@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Enrolled face photos (personal data)
+data/enrolled_faces/
+
+# Trained emotion model weights
+emotion_module/model/
+emotion_module/*.pth
+emotion_module/*.pt
+emotion_module/*.h5
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Environment / secrets
+.env
+*.env
+config_local.py
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
