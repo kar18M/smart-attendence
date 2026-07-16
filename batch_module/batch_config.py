@@ -1,0 +1,24 @@
+"""
+batch_module/batch_config.py
+-----------------------------
+All tunable constants for Batch Mode attendance.
+"""
+
+# Capture timing
+CAPTURE_INTERVAL_SECONDS: int = 30
+CAMERA_INDEX: int = 0
+CAPTURE_WIDTH: int = 1920
+CAPTURE_HEIGHT: int = 1080
+
+# Tiling
+TILE_SIZE: tuple[int, int] = (640, 640)
+TILE_OVERLAP: float = 0.2
+UPSCALE_FACTOR: int = 2
+
+# Detection / recognition
+MIN_FACE_SIZE_PX: int = 40
+BATCH_RECOGNITION_THRESHOLD: float = 0.55
+DEDUP_IOU_THRESHOLD: float = 0.35
+
+# Engagement logging
+BATCH_ENGAGEMENT_COOLDOWN_SECONDS: int = 60

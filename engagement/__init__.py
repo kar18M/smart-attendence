@@ -1,0 +1,1 @@
+"""engagement — maps emotion labels to Engaged / Neutral / Disengaged scores."""
