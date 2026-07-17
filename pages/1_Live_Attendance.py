@@ -2,6 +2,7 @@
 pages/1_Live_Attendance.py
 ---------------------------
 Live webcam feed with real-time face recognition and emotion display.
+Uses streamlit-webrtc for continuous video (NOT st.camera_input).
 """
 
 import sys, os
@@ -9,27 +10,40 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, RTCConfiguration
+
 from database.mongo_client import get_db, MongoConnectionError
 from database.db_operations import get_all_students
 from video_processor import VideoProcessor
 
-st.set_page_config(page_title="Live Attendance — Smart Attendance", page_icon="🎥", layout="wide")
+st.set_page_config(
+    page_title="Live Attendance — Smart Attendance",
+    page_icon="🎥",
+    layout="wide",
+)
+
 st.title("🎥 Live Attendance")
 st.markdown("The webcam feed runs face recognition every frame. Recognised students are marked present automatically.")
 
 try:
     get_db()
+    mongo_ok = True
 except MongoConnectionError as exc:
     st.error(f"❌ MongoDB not connected: {exc}")
     st.stop()
 
 students = get_all_students()
 if not students:
-    st.warning("⚠️ No students enrolled yet. Go to **➕ Enroll Student** to register students first.")
+    st.warning(
+        "⚠️ No students are enrolled yet.\n\n"
+        "Go to **➕ Enroll Student** in the sidebar to register students before starting the live feed."
+    )
     st.stop()
 
 col_video, col_sidebar = st.columns([3, 1])
-RTC_CONFIG = RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]})
+
+RTC_CONFIG = RTCConfiguration(
+    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+)
 
 with col_video:
     st.markdown("### 📡 Live Feed")
@@ -39,9 +53,14 @@ with col_video:
         rtc_configuration=RTC_CONFIG,
         video_processor_factory=VideoProcessor,
         media_stream_constraints={
-            "video": {"width": {"min": 640, "ideal": 1280}, "height": {"min": 480, "ideal": 720},
-                      "frameRate": {"ideal": 15, "max": 30},
-                      "noiseSuppression": False, "echoCancellation": False, "autoGainControl": False},
+            "video": {
+                "width":     {"min": 640, "ideal": 1280},
+                "height":    {"min": 480, "ideal": 720},
+                "frameRate": {"ideal": 15, "max": 30},
+                "noiseSuppression": False,
+                "echoCancellation": False,
+                "autoGainControl":  False,
+            },
             "audio": False,
         },
         async_processing=True,
@@ -50,7 +69,10 @@ with col_video:
         st.success("🟢 Stream active — face recognition running")
     else:
         st.info("⚪ Click **START** above to begin the live session.")
-    st.caption("💡 If stream fails to start, check webcam permission.")
+    st.caption(
+        "💡 If the stream fails to start, check that your browser has webcam permission "
+        "and no other app is using the camera."
+    )
 
 with col_sidebar:
     st.markdown("### 📊 Session Status")
@@ -59,7 +81,7 @@ with col_sidebar:
     st.markdown("---")
     st.markdown("### ✅ Marked Present This Session")
     if ctx.video_processor:
-        processor = ctx.video_processor
+        processor: VideoProcessor = ctx.video_processor
         marked = processor.marked_this_session
         if marked:
             for entry in marked:

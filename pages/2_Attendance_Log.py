@@ -10,10 +10,16 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import streamlit as st
 import pandas as pd
 from datetime import date
+
 from database.mongo_client import get_db, MongoConnectionError
 from database.db_operations import get_attendance_by_date, get_all_attendance
 
-st.set_page_config(page_title="Attendance Log — Smart Attendance", page_icon="📋", layout="wide")
+st.set_page_config(
+    page_title="Attendance Log — Smart Attendance",
+    page_icon="📋",
+    layout="wide",
+)
+
 st.title("📋 Attendance Log")
 st.markdown("View, filter, and export daily attendance records.")
 
@@ -34,12 +40,14 @@ if show_all:
     records = get_all_attendance()
     title_str = "All records"
 else:
-    records = get_attendance_by_date(selected_date.isoformat())
+    date_str = selected_date.isoformat()
+    records = get_attendance_by_date(date_str)
     title_str = f"Records for **{selected_date.strftime('%A, %d %B %Y')}**"
 
 st.markdown(f"### {title_str}")
+
 if not records:
-    st.info("💭 No attendance records found.")
+    st.info("💭 No attendance records found for the selected date.")
 else:
     df = pd.DataFrame(records)
     if "timestamp" in df.columns:
@@ -47,15 +55,38 @@ else:
     if "date" not in df.columns:
         df["date"] = selected_date.isoformat()
     preferred_order = ["name", "student_id", "date", "timestamp", "status"]
-    cols = [c for c in preferred_order if c in df.columns] + [c for c in df.columns if c not in preferred_order]
+    cols = [c for c in preferred_order if c in df.columns] + [
+        c for c in df.columns if c not in preferred_order
+    ]
     df = df[cols]
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(
+        df, use_container_width=True, hide_index=True,
+        column_config={
+            "name": st.column_config.TextColumn("Name", width="medium"),
+            "student_id": st.column_config.TextColumn("Student ID", width="small"),
+            "date": st.column_config.TextColumn("Date", width="small"),
+            "timestamp": st.column_config.TextColumn("Time", width="medium"),
+            "status": st.column_config.TextColumn("Status", width="small"),
+        },
+    )
     st.markdown("---")
     m1, m2, m3 = st.columns(3)
     m1.metric("Total Present", len(df))
-    if "date" in df.columns: m2.metric("Unique Dates", df["date"].nunique())
-    if "name" in df.columns: m3.metric("Unique Students", df["name"].nunique())
+    if "date" in df.columns:
+        m2.metric("Unique Dates", df["date"].nunique())
+    if "name" in df.columns:
+        m3.metric("Unique Students", df["name"].nunique())
     st.markdown("---")
     csv_data = df.to_csv(index=False).encode("utf-8")
-    filename = f"attendance_all_{date.today().isoformat()}.csv" if show_all else f"attendance_{selected_date.isoformat()}.csv"
-    st.download_button("⬇️ Download as CSV", data=csv_data, file_name=filename, mime="text/csv", type="primary")
+    filename = (
+        f"attendance_all_{date.today().isoformat()}.csv"
+        if show_all
+        else f"attendance_{selected_date.isoformat()}.csv"
+    )
+    st.download_button(
+        label="⬇️ Download as CSV",
+        data=csv_data,
+        file_name=filename,
+        mime="text/csv",
+        type="primary",
+    )
