@@ -8,12 +8,12 @@ dist/
 build/
 *.egg
 
-# Virtual environment
+# Virtual environment — never commit this
 venv/
 .venv/
 env/
 
-# Enrolled face photos (personal data)
+# Enrolled face photos & data (personal data — keep local)
 data/enrolled_faces/
 
 # Trained emotion model weights
@@ -22,7 +22,7 @@ emotion_module/*.pth
 emotion_module/*.pt
 emotion_module/*.h5
 
-# Streamlit secrets
+# Streamlit
 .streamlit/secrets.toml
 
 # Environment / secrets

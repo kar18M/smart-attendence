@@ -1,1 +1,1 @@
-"""batch_module — Periodic high-resolution classroom snapshot attendance."""
+"""batch_module — high-resolution snapshot processing for large classrooms."""

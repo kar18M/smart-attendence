@@ -1,1 +1,1 @@
-"""face_recognition_module — enrollment, embedding storage, and recognition."""
+"""face_recognition_module — enrollment, encoding store, and recognizer."""
