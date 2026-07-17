@@ -1,14 +1,20 @@
 """
 face_recognition_module/recognizer.py
 ---------------------------------------
-Frame-level face recognition using face_recognition (dlib) or OpenCV Haar fallback.
+Frame-level face recognition.
+
+Uses face_recognition (dlib) if available; otherwise falls back to
+OpenCV Haar cascade detection + cosine-distance histogram embedding comparison.
 """
 
 from __future__ import annotations
+
 import logging
 from typing import List, Tuple, Dict, Optional
+
 import cv2
 import numpy as np
+
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
@@ -16,7 +22,7 @@ import config
 logger = logging.getLogger(__name__)
 
 try:
-    import face_recognition
+    import face_recognition  # type: ignore
     _FR_AVAILABLE = True
 except ImportError:
     _FR_AVAILABLE = False
@@ -24,25 +30,28 @@ except ImportError:
 BoundingBox = Tuple[int, int, int, int]
 RecognitionResult = Tuple[BoundingBox, str, str, float]
 
-_HAAR_CASCADE = None
+_HAAR_CASCADE: Optional[cv2.CascadeClassifier] = None
 
-def _get_haar_cascade():
+
+def _get_haar_cascade() -> cv2.CascadeClassifier:
     global _HAAR_CASCADE
     if _HAAR_CASCADE is None:
         _HAAR_CASCADE = cv2.CascadeClassifier(config.HAAR_CASCADE_PATH)
     return _HAAR_CASCADE
 
-def _detect_faces_haar(rgb):
+
+def _detect_faces_haar(rgb: np.ndarray) -> List[BoundingBox]:
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
     cascade = _get_haar_cascade()
     dets = cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(60, 60))
-    bboxes = []
+    bboxes: List[BoundingBox] = []
     if len(dets) > 0:
         for (x, y, w, h) in dets:
             bboxes.append((y, x + w, y + h, x))
     return bboxes
 
-def _compute_histogram_embedding(face_rgb):
+
+def _compute_histogram_embedding(face_rgb: np.ndarray) -> np.ndarray:
     face_resized = cv2.resize(face_rgb, (64, 64))
     gray = cv2.cvtColor(face_resized, cv2.COLOR_RGB2GRAY)
     hists = []
@@ -57,11 +66,19 @@ def _compute_histogram_embedding(face_rgb):
         embedding /= norm
     return embedding
 
-def _cosine_distance(a, b):
+
+def _cosine_distance(a: np.ndarray, b: np.ndarray) -> float:
     return float(1.0 - np.dot(a, b))
 
-def recognize_faces(frame_rgb, known_encodings, known_metadata, threshold=config.RECOGNITION_THRESHOLD):
-    results = []
+
+def recognize_faces(
+    frame_rgb: np.ndarray,
+    known_encodings: List[np.ndarray],
+    known_metadata: List[dict],
+    threshold: float = config.RECOGNITION_THRESHOLD,
+) -> List[RecognitionResult]:
+    results: List[RecognitionResult] = []
+
     if _FR_AVAILABLE:
         face_locations = face_recognition.face_locations(frame_rgb, model="hog")
         if not face_locations:
@@ -101,9 +118,15 @@ def recognize_faces(frame_rgb, known_encodings, known_metadata, threshold=config
                 results.append((bbox, meta["student_id"], meta["name"], best_dist))
             else:
                 results.append((bbox, "Unknown", "Unknown", best_dist))
+
     return results
 
-def draw_annotations(frame_bgr, results, emotion_labels=None):
+
+def draw_annotations(
+    frame_bgr: np.ndarray,
+    results: List[RecognitionResult],
+    emotion_labels: Optional[Dict[str, str]] = None,
+) -> np.ndarray:
     for bbox, student_id, name, distance in results:
         top, right, bottom, left = bbox
         colour = (0, 200, 0) if student_id != "Unknown" else (0, 0, 220)
@@ -113,6 +136,14 @@ def draw_annotations(frame_bgr, results, emotion_labels=None):
             label += f" | {emotion_labels[student_id]}"
         label_y = top - 10 if top > 20 else bottom + 20
         (text_w, text_h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.55, 1)
-        cv2.rectangle(frame_bgr, (left, label_y - text_h - 4), (left + text_w + 4, label_y + 2), colour, cv2.FILLED)
-        cv2.putText(frame_bgr, label, (left + 2, label_y - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1, cv2.LINE_AA)
+        cv2.rectangle(
+            frame_bgr,
+            (left, label_y - text_h - 4),
+            (left + text_w + 4, label_y + 2),
+            colour, cv2.FILLED,
+        )
+        cv2.putText(
+            frame_bgr, label, (left + 2, label_y - 2),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1, cv2.LINE_AA,
+        )
     return frame_bgr
