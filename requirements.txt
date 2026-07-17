@@ -7,36 +7,39 @@
 #   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 #   pip install -r requirements.txt
 
-# Core web framework
+# ── Core web framework ─────────────────────────────────────────────────────
 streamlit>=1.35.0,<2.0.0
 
-# WebRTC live video
+# ── WebRTC live video ────────────────────────────────────────────────────
 streamlit-webrtc>=0.47.0
 aiortc>=1.9.0
 av>=12.0.0
 
-# Face recognition (dlib-based)
-# Install separately after system deps:
-#   sudo apt install python3.10-dev build-essential cmake libopenblas-dev liblapack-dev
-#   pip install dlib face-recognition face-recognition-models
+# ── Face recognition (dlib-based) ───────────────────────────────────────────
+# OPTIONAL: only if dlib compiles successfully.
+# Requires: sudo apt install python3.10-dev build-essential
+# Then: pip install face-recognition face-recognition-models
+# Without it, falls back to OpenCV Haar cascade + histogram embedding.
 # face-recognition>=1.3.0
+# face-recognition-models>=0.3.0
 
-# Computer vision
+# ── Computer vision (OpenCV 4.x) ──────────────────────────────────────────
+# NOTE: Use 4.x — cv2.CascadeClassifier was removed in OpenCV 5
 opencv-python==4.10.0.84
 opencv-python-headless==4.10.0.84
 
-# Deep learning (CPU PyTorch)
-# Install separately: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# ── Deep learning (CPU-only PyTorch) ──────────────────────────────────────
 torch>=2.3.0
 torchvision>=0.18.0
 
-# MongoDB
+# ── MongoDB ───────────────────────────────────────────────────────────────────
 pymongo>=4.8.0
 
-# Data & analytics
+# ── Data & analytics ───────────────────────────────────────────────────────
+deep_learning>=1.26.0
 numpy>=1.26.0
 pandas>=2.2.0
 plotly>=5.22.0
 
-# Utilities
+# ── Utilities ──────────────────────────────────────────────────────────────
 mediapipe>=0.10.0
